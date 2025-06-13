@@ -43,11 +43,11 @@ Computer architecture is essential for designing and building modern computers, 
 
 In summary, computer architecture is the design and organization of a computer's internal components, which determines the performance, efficiency, and reliability of the system. Understanding computer architecture is essential for designing and building modern computers, as well as developing new technologies and applications.
 
-Generated 478 tokens in 4667.77 ms.
-Average tokens per second: 102.40 tokens/s.
+Generated 478 tokens in 4666.45 ms.
+Average tokens per second: 102.43 tokens/s.
 ================================================================================================================================================================
 ========================================================================= Performance ==========================================================================
-Prefill performance: seq_len = 1024, ctx_len = 0, use_kvcache = True, duration = 205.64 ms, speed = 4979.53 tokens/s
-Prefill performance: seq_len = 1024, ctx_len = 0, use_kvcache = False, duration = 209.43 ms, speed = 4889.46 tokens/s
-Decode performance: seq_len = 1024, ctx_len = 0, use_kvcache = True, duration = 9772.05 ms, speed = 104.79 tokens/s
+Prefill performance: seq_len = 1024, ctx_len = 0, use_kvcache = True, duration = 205.10 ms, speed = 4992.62 tokens/s
+Prefill performance: seq_len = 1024, ctx_len = 0, use_kvcache = False, duration = 208.25 ms, speed = 4917.23 tokens/s
+Decode performance: seq_len = 1024, ctx_len = 0, use_kvcache = True, duration = 9754.34 ms, speed = 104.98 tokens/s
 ================================================================================================================================================================
