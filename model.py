@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import time
+import os
 from transformers import AutoTokenizer
 from huggingface_hub import login
 from gguf.gguf_reader import GGUFReader
@@ -303,7 +304,7 @@ class Client:
         print(f"Average tokens per second: {ctx_len / ((end - start) / 1e9):.2f} tokens/s.")
 
 if __name__ == "__main__":
-    login(token="")
+    login(token=os.getenv("HF_TOKEN"))
 
     model_name = "meta-llama/Llama-3.2-1B-Instruct"
     gguf_path = "../models/Llama-3.2-1B-Instruct-BF16.gguf"
