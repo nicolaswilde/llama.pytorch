@@ -159,6 +159,9 @@ class Model:
     def forward(self, inputs: torch.Tensor, use_kvcache: bool = True):
         seq_len = inputs.shape[0]
         attn_mask = torch.tril(torch.ones((seq_len, seq_len), dtype=torch.bool, device=self.device))  # [sl, sl]
+        if use_kvcache:
+            cache_mask = torch.ones((seq_len, self.ctx_len), dtype=torch.bool, device=self.device)    # [sl, ctx_len]
+            attn_mask = torch.cat((cache_mask, attn_mask), dim=1)                                     # [sl, sl + ctx_len]
         hidden_states = self.token_embed_weight[inputs]                                               # [sl, d]
         for i in range(self.n_block):
             # RMS Normalization
@@ -316,6 +319,36 @@ class Client:
         print(f"Generated {ctx_len} tokens in {(end - start) / 1e6:.2f} ms.")
         print(f"Average tokens per second: {ctx_len / ((end - start) / 1e9):.2f} tokens/s.")
 
+    def perplexity(self, text: str, chunk_size: int = 512):
+        tokens = self.tokenizer.encode(text, return_tensors="pt").to(self.device)[0]
+
+        total_log_prob = 0.0
+        total_tokens = 0
+
+        for i in range(0, (len(tokens)-1) // chunk_size):
+            self.model.initialize()
+
+            inputs = tokens[i * chunk_size:(i + 1) * chunk_size]
+            targets = tokens[i * chunk_size + 1:(i + 1) * chunk_size + 1]
+            outputs = self.model.forward(inputs, use_kvcache=True).to(torch.float32)
+
+            # last half
+            targets = targets[chunk_size // 2:]
+            outputs = outputs[chunk_size // 2:]
+
+            log_probs = torch.nn.functional.log_softmax(outputs, dim=-1)
+            log_probs = log_probs.gather(-1, targets.unsqueeze(-1)).squeeze(-1)
+
+            total_log_prob += log_probs.sum().item()
+            total_tokens += len(targets)
+
+            perplexity = torch.exp(torch.tensor(-total_log_prob / total_tokens))
+            print(f"[{i + 1}]{perplexity.item():.4f},", end='', flush=True)
+        print("")
+
+        perplexity = torch.exp(torch.tensor(-total_log_prob / total_tokens))
+        print(f"Perplexity: {perplexity.item():.4f}")
+
 if __name__ == "__main__":
     login(token=os.getenv("HF_TOKEN"))
 
@@ -361,4 +394,13 @@ if __name__ == "__main__":
     client_fp16.prefill_performance(seq_len=1024, ctx_len=0, use_kvcache=False)
     client_fp16.decode_performance(seq_len=1024, ctx_len=0, use_kvcache=True)
     # client_fp16.decode_performance(seq_len=1024, ctx_len=0, use_kvcache=False)
+    print_line()
+
+    # perplexity of wiki.test.raw
+    text = open("wiki.test.raw", "r", encoding="utf-8").read()
+    print_title("Perplexity FP32")
+    client_fp32.perplexity(text, chunk_size=512)
+    print_line()
+    print_title("Perplexity FP16")
+    client_fp16.perplexity(text, chunk_size=512)
     print_line()
